@@ -1,6 +1,30 @@
 require 'object-memory-analyzer'
 
 describe ObjectMemoryAnalyzer do
+  describe '#analyze_objects' do
+    it 'aggregates the result for all objects' do
+      test_objects = Array.new(10) { |index| "foo_#{index}" }
+      test_string = "blahblahblah"
+      test_objects << test_string
+      test_objects << []
+      test_objects << {}
+
+      result = subject.analyze_objects(test_objects)
+
+      expect(result.self_by_class[String]).to eq 440
+      expect(result.total_by_class[String]).to eq 440
+
+      expect(result.self_by_class[Array]).to eq 40
+      expect(result.total_by_class[Array]).to eq 40
+
+      expect(result.self_by_class[Hash]).to eq 40
+      expect(result.total_by_class[Hash]).to eq 40
+
+      expect(result.self_by_object_id[test_string.object_id]).to eq 40
+      expect(result.total_by_object_id[test_string.object_id]).to eq 40
+    end
+  end
+
   describe '#analyze_object' do
     it 'does the thing' do
       test_object = 'foo'

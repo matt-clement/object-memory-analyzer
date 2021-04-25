@@ -4,11 +4,20 @@ require 'objspace'
 module ObjectMemoryAnalyzer
   extend self
 
-  def analyze_object(obj)
+  def analyze_objects(objects)
     result = ObjectMemoryAnalyzer::AnalysisResult.new
     seen = Set.new
 
-    get_full_size(obj, result, seen)
+    objects.each { |object| get_full_size(object, result, seen) }
+
+    result
+  end
+
+  def analyze_object(object)
+    result = ObjectMemoryAnalyzer::AnalysisResult.new
+    seen = Set.new
+
+    get_full_size(object, result, seen)
 
     result
   end
