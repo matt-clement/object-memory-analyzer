@@ -1,0 +1,2 @@
+module ObjectMemoryAnalyzer
+end
