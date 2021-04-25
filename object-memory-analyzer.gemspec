@@ -9,6 +9,7 @@ Gem::Specification.new do |s|
   s.email = 'clement.matthewp@gmail.com'
   s.files = [
     "lib/object-memory-analyzer.rb",
+    "lib/object-memory-analyzer/analyzer.rb",
     "lib/object-memory-analyzer/analysis_result.rb",
     "lib/object-memory-analyzer/version.rb",
   ]
