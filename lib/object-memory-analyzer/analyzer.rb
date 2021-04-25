@@ -38,7 +38,6 @@ module ObjectMemoryAnalyzer
     private
 
     def get_full_size(obj, result, seen)
-      p obj.object_id
       if result.total_by_object_id.key?(obj.object_id)
         return result.total_by_object_id[obj.object_id]
       elsif self_owned_object_ids.include?(obj.object_id)
