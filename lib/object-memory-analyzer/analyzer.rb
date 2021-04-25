@@ -37,6 +37,8 @@ module ObjectMemoryAnalyzer
 
     private
 
+    attr_writer *attributes
+
     def get_full_size(obj, result, seen)
       if result.total_by_object_id.key?(obj.object_id)
         return result.total_by_object_id[obj.object_id]
@@ -66,7 +68,5 @@ module ObjectMemoryAnalyzer
       result.aggregate(obj, self_byte_size, total_byte_size)
       total_byte_size
     end
-
-    attr_writer *attributes
   end
 end
