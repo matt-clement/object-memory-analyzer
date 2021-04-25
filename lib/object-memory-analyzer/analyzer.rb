@@ -13,16 +13,12 @@ module ObjectMemoryAnalyzer
       # Exclude objects owned by the analyzer from being analyzed.
       # This prevents a problem where we would try to modify a hash while
       # iterating over it, which raises an error.
-      self.self_owned_object_ids = Set.new
+      self_owned_object_ids = Set.new
       self_owned_object_ids << self.object_id
-      self_owned_object_ids << self_owned_object_ids.object_id
-      self_owned_object_ids << result.object_id
-      self_owned_object_ids << result.self_by_class.object_id
-      self_owned_object_ids << result.self_by_object_id.object_id
-      self_owned_object_ids << result.total_by_class.object_id
-      self_owned_object_ids << result.total_by_object_id.object_id
-      self_owned_object_ids << seen.object_id
-      self_owned_object_ids << seen.instance_variable_get(:@hash).object_id
+      referenced_objects(self, recurse: true).each do |object|
+        self_owned_object_ids << object.object_id
+      end
+      self.self_owned_object_ids = self_owned_object_ids
     end
 
     def analyze_objects(objects)
@@ -50,8 +46,7 @@ module ObjectMemoryAnalyzer
       total_byte_size = self_byte_size
 
       seen << obj.object_id
-      obj.instance_variables.each do |instance_variable_name|
-        referenced_object = obj.instance_variable_get(instance_variable_name)
+      referenced_objects(obj).each do |referenced_object|
         referenced_object_id = referenced_object.object_id
         if !seen.include?(referenced_object_id)
           seen << referenced_object_id
@@ -59,14 +54,28 @@ module ObjectMemoryAnalyzer
         end
       end
 
-      # There is most definitely a better way of doing this. However, enumerable
-      # objects can be infinite or input streams that may hang forever. I have
-      # limited this to Arrays and Hashes for now to keep things simple.
-      if obj.is_a?(Array) || obj.is_a?(Hash)
-        obj.each { |item| total_byte_size += get_full_size(item, result, seen) }
-      end
       result.aggregate(obj, self_byte_size, total_byte_size)
       total_byte_size
+    end
+
+    def referenced_objects(object, seen: Set.new, recurse: false)
+      Enumerator.new do |y|
+        object.instance_variables.each do |instance_variable_name|
+          referenced_object = object.instance_variable_get(instance_variable_name)
+          next if seen.include?(referenced_object.object_id)
+          seen << referenced_object.object_id
+          y << referenced_object
+          referenced_objects(referenced_object, seen: seen, recurse: recurse).each { |x| y << x } if recurse
+        end
+        if object.is_a?(Array) || object.is_a?(Hash)
+          object.each do |item|
+            next if seen.include?(item.object_id)
+            seen << item.object_id
+            y << item
+            referenced_objects(item, seen: seen, recurse: recurse).each { |x| y << x } if recurse
+          end
+        end
+      end
     end
   end
 end
